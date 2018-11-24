@@ -1,0 +1,11 @@
+{
+  "name": "compress_script",
+  "version": "0.0.1",
+  "main": "index.js",
+  "author": "wh1tecat",
+  "license": "MIT",
+  "dependencies": {
+    "compress-images": "^1.4.6",
+    "jimp": "^0.5.6"
+  }
+}
