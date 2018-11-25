@@ -6,6 +6,6 @@
   "license": "MIT",
   "dependencies": {
     "compress-images": "^1.4.6",
-    "jimp": "^0.5.6"
+    "sharp": "^0.21.0"
   }
 }
