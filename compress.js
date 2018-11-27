@@ -21,11 +21,14 @@ const compress = async (srcPath, dstPath) => {
 			{jpg: {engine: 'mozjpeg', command: ['-quality', '85']}},
 			{png: {engine: 'pngquant', command: ['--quality=80-85']}},
 			{svg: {engine: false, command: false}},
-			{gif: {engine: false, command: false}}, function(error, completed, statistic){
+			{gif: {engine: false, command: false}}, (error, completed, statistic) => {
+			
 			if (statistic) {
 				console.log(statistic);
 			} else if (completed === true) {
 				resolve("complete");
+			} else if (error === null) {
+				resolve("nothing compressed");
 			}
 		});
 	});

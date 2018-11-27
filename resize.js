@@ -82,6 +82,7 @@ const createDirectory = async (targetPath) => {
 const createDstPath = (baseSrcPath, srcPath, dstPath) => {
 	return `${dstPath}${srcPath.replace(baseSrcPath, "")}`
 }
+
 const getCount = () => {
 	counter += 1;
 	return counter;
@@ -92,14 +93,14 @@ const getCount = () => {
  * @param {*} srcPath 
  * @param {*} dstPath 
  */
-const resizePicture = async (srcPath, dstPath) => {
+const resizePicture = async (srcPath, dstPath, maxSize) => {
 	return new Promise(async (resolve, reject) => {
-		const MAX_LENGTH = 1280;
-		let filetype = path.extname(srcPath).replace(".", "");
-		if (FILE_TYPE.includes(filetype)) {
+		const MAX_LENGTH = maxSize;
+		let fileType = path.extname(srcPath).replace(".", "");
+		if (FILE_TYPE.includes(fileType)) {
 			let image = sharp(srcPath);
 			image.metadata()
-			.then((metadata) => {
+			.then(async (metadata) => {
 				const originalWidth = metadata.width;
 				const originalHeight = metadata.height;
 				let aspectRatio;
@@ -131,6 +132,10 @@ const resizePicture = async (srcPath, dstPath) => {
 						})
 				}
 			});
+		} else {
+			let index = getCount();
+			console.log(`${index} : not picture. skipped.`)
+			resolve("success");
 		}
 	});
 }
@@ -152,23 +157,32 @@ const isFileOrDir = async (_path) => {
 	});
 }
 
-const resize = async (srcPath, dstPath) => {
+const resize = (srcPath, dstPath, maxSize) => {
 	return new Promise(async (resolve, reject) => {
-		const dirPaths = await getRecursiveDirList(srcPath);
-		const filePaths = await getRecursiveFileList(srcPath);
-		console.log(`start copy directory`);
-		for (const path of dirPaths) {
-			let result = await createDirectory(createDstPath(srcPath, path, dstPath));
-			console.log(result);
+		let fileType = path.extname(srcPath).replace(".", "");
+		if (await isFileOrDir(srcPath) === "file" && FILE_TYPE.includes(fileType)) {
+			await fsp.mkdir(path.dirname(dstPath), {recursive: true});
+			resizePicture(srcPath, dstPath, maxSize)
+				.then(() => {
+					console.log("resized");
+					resolve("success resize");
+				});
+		} else if (isFileOrDir(srcPath) === "directory") {
+			const dirPaths = await getRecursiveDirList(srcPath);
+			const filePaths = await getRecursiveFileList(srcPath);
+			console.log(`start copy directory`);
+			for (const path of dirPaths) {
+				let result = await createDirectory(createDstPath(srcPath, path, dstPath));
+			}
+			counter = 0;
+			console.log("start resize file");
+			Promise.all(filePaths.map((filePath) => {
+				return resizePicture(filePath, createDstPath(srcPath, filePath, dstPath), maxSize);
+			}))
+			.then(() => {
+				resolve("success");
+			});	
 		}
-		counter = 0;
-		console.log("start resize file");
-		Promise.all(filePaths.map((filePath) => {
-			return resizePicture(filePath, createDstPath(srcPath, filePath, dstPath));
-		}))
-		.then(() => {
-			resolve("success");
-		});
 	});
 }
 

@@ -4,6 +4,12 @@ const fsp = fs.promises;
 const compress = require("./compress");
 const resize = require("./resize");
 
+// const head_shot = require("./head_shot");
+const profile_photo = require("./profile_photo");
+
+// let value
+let counter = 0;
+
 /**
  * 指定したファイルが存在するかを確認する
  * @param {*} filePath 
@@ -16,10 +22,15 @@ const existFile = async (filePath) => {
 	});
 }
 
+const getCount = () => {
+	counter += 1;
+	return counter;
+}
+
 const arg = process.argv;
 
 if (arg.length != 5) {
-	console.log("not match arg count");
+	throw new Error("not match arg count");
 }
 
 const srcPath = path.resolve(arg[2]);
@@ -37,12 +48,9 @@ if (!(mode === "resize" || mode === "compress" || mode === "both")) {
 
 (async () => {
 	if (mode === "resize" || mode === "both") {
-		console.log(srcPath);
-		console.log(dstPath)
-		const result = await resize(srcPath, dstPath);
-		console.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+		const result = await resize(srcPath, dstPath, 1280);
 		compressSrcPath = dstPath;
-		compressDstPath = `${dstPath}_compress`
+		compressDstPath = `${dstPath}_compress`;
 	}
 	if (mode === "compress" || mode === "both") {
 		console.log("compress");
@@ -50,8 +58,15 @@ if (!(mode === "resize" || mode === "compress" || mode === "both")) {
 			compressSrcPath = srcPath;
 			compressDstPath = dstPath;
 		}
-		console.log(compressSrcPath);
-		console.log(compressDstPath);
 		const result = await compress(compressSrcPath, compressDstPath);
+	}
+	for (const photoPath of profile_photo) {
+		profileSrcPath = `${compressDstPath}${photoPath}`;
+		profileDstPath = `${compressDstPath}_profile${photoPath}`;
+		resize(profileSrcPath, profileDstPath, 480)
+		.then(() => {
+			let index = getCount();
+			console.log(`${index} : success resize profile_photo\n  ${compressDstPath}/${photoPath}`);
+		});
 	}
 })();
